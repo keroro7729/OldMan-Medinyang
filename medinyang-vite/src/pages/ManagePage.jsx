@@ -96,7 +96,7 @@ const ManagePage = () => {
                 <ul>
                   {weeklySummary.map((item, idx) => (
                     <li key={idx} style={styles.reportText}>
-                      - {item}
+                      {item}
                     </li>
                   ))}
                 </ul>

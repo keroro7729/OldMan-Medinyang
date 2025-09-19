@@ -1,9 +1,9 @@
-// ✅ ChatPage.jsx - 메디냥 AI 챗봇 페이지 (더미 응답 버전 + 고정 레이아웃)
+// ✅ ChatPage.jsx - 메디냥 AI 챗봇 페이지 (백엔드 연동 버전)
 import React, { useState, useEffect } from "react";
 import ChatList from "../components/Chat/ChatList";
 import ChatInput from "../components/Chat/ChatInput";
 import TopHeader from "../components/TopHeader";
-import BottomNav from "../components/BottomNav"; // ✅ 하단 네비게이션
+import BottomNav from "../components/BottomNav";
 import { useLocation } from "react-router-dom";
 
 const ChatPage = () => {
@@ -11,12 +11,12 @@ const ChatPage = () => {
   const [messages, setMessages] = useState([]);
   const [isReplying, setIsReplying] = useState(false);
 
-  // ✅ 초기 환영 메시지 출력
+  // ✅ 초기 환영 메시지
   useEffect(() => {
     setMessages([{ sender: "gpt", text: "오늘은 어떤 건강 고민이 있냥? 🐾" }]);
   }, []);
 
-  // ✅ 업로드 페이지에서 넘어온 경우 메시지 추가
+  // ✅ 업로드 페이지에서 초기 메시지 전달된 경우
   useEffect(() => {
     if (location.state?.fromUpload && location.state.initialMessage) {
       setMessages((prev) => [
@@ -26,21 +26,47 @@ const ChatPage = () => {
     }
   }, [location.state]);
 
-  // ✅ 사용자 메시지 전송 처리
-  const handleSend = (text) => {
-    if (!text.trim() || isReplying) return;
+  // ✅ 사용자 메시지 전송 처리 (fetch 사용)
+  const handleSend = async (text) => {
+    const content = (text || "").trim();
+    if (!content || isReplying) return;
 
-    setMessages((prev) => [...prev, { sender: "user", text }]);
+    // 1) 사용자 말풍선 먼저 추가
+    setMessages((prev) => [...prev, { sender: "user", text: content }]);
     setIsReplying(true);
 
-    // 1초 뒤 더미 응답
-    setTimeout(() => {
+    try {
+      // 2) POST 요청
+      const res = await fetch("http://localhost:8080/api/chats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`서버 오류: ${res.status}`);
+      }
+
+      const data = await res.json(); // { content, response, createdAt }
+
+      // 3) GPT 말풍선 추가
       setMessages((prev) => [
         ...prev,
-        { sender: "gpt", text: `메디냥이 답변해줄게냥: "${text}"` },
+        { sender: "gpt", text: data.response, createdAt: data.createdAt },
       ]);
+    } catch (err) {
+      console.error(err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "gpt",
+          text: "서버와 연결할 수 없냥. 잠시 후 다시 시도해줘!",
+          error: true,
+        },
+      ]);
+    } finally {
       setIsReplying(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -78,11 +104,11 @@ const styles = {
     alignItems: "center",
     width: "100%",
     height: "100vh",
-    backgroundColor: "#D1E3FF", // 바깥 배경
+    backgroundColor: "#D1E3FF",
   },
   container: {
     position: "relative",
-    maxWidth: "430px", // 고정 레이아웃
+    maxWidth: "430px",
     width: "100%",
     height: "100%",
     backgroundColor: "#f5f5f5",
@@ -92,7 +118,7 @@ const styles = {
   chatArea: {
     position: "absolute",
     top: "56px",
-    bottom: "96px", // 입력창 위까지
+    bottom: "96px",
     left: 0,
     right: 0,
     overflowY: "auto",
@@ -100,7 +126,7 @@ const styles = {
   },
   inputWrapper: {
     position: "fixed",
-    bottom: "64px", // ✅ 네비게이션 위에 고정
+    bottom: "64px",
     left: "50%",
     transform: "translateX(-50%)",
     width: "100%",

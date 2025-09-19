@@ -15,6 +15,12 @@ public class PromptManager {
     public static final List<Message> MEDINYANG_CHAT_BASE_PROMPT = buildBasePrompt(
         MEDINYANG_CHAT_PROMPT, MEDINYANG_CHAT_EXAMPLE_PROMPT);
 
+    private static final String MEDINYANG_OCR_PROMPT = "medinyang_ocr.prompt";
+    private static final String MEDINYANG_OCR_EXAMPLE_PROMPT = "medinyang_ocr_example.prompt";
+
+    public static final List<Message> MEDINYANG_OCR_BASE_PROMPT = buildBasePrompt(
+        MEDINYANG_OCR_PROMPT, MEDINYANG_OCR_EXAMPLE_PROMPT);
+
     private static List<Message> buildBasePrompt(String systemPromptFileName,
         String examplePromptFileName) {
         List<Message> message = new ArrayList<>();

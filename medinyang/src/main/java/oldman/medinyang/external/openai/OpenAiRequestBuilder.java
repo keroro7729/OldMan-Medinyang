@@ -5,10 +5,14 @@ import static oldman.medinyang.external.openai.PromptManager.MEDINYANG_CHAT_BASE
 
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Data;
 import oldman.medinyang.domain.Chat;
 import oldman.medinyang.external.openai.dto.ChatCompletionRequest;
+import oldman.medinyang.external.openai.dto.VisionRequest;
+import oldman.medinyang.external.openai.dto.VisionRequest.Content;
+import oldman.medinyang.external.openai.dto.VisionRequest.InputItem;
 
-public class ChatCompletionRequestBuilder {
+public class OpenAiRequestBuilder {
 
     private static final String MODEL = "gpt-4o-mini";
     private static final double TEMPERATURE = 0.7;
@@ -30,6 +34,26 @@ public class ChatCompletionRequestBuilder {
         request.setMax_tokens(MAX_TOKEN);
 
         return request;
+    }
+
+    public static VisionRequest buildMedinyangOcrRequest(String imageUrl) {
+        VisionRequest request = new VisionRequest();
+        request.setModel(MODEL);
+        request.setInput(buildInputItem(imageUrl));
+        System.out.println(request);
+        return request;
+    }
+
+    private static List<VisionRequest.InputItem> buildInputItem(String imageUrl) {
+        VisionRequest.Content content = new Content();
+        content.setType("input_image");
+        content.setImage_url(imageUrl);
+        //content.setDetail("auto");
+
+        InputItem inputItem = new InputItem();
+        inputItem.setRole("user");
+        inputItem.setContent(List.of(content));
+        return List.of(inputItem);
     }
 
     private static ChatCompletionRequest.Message userMessage(String content) {

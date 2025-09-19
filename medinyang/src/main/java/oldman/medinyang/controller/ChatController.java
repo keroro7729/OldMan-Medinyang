@@ -4,6 +4,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import oldman.medinyang.dto.chat.ChatDto;
 import oldman.medinyang.dto.chat.GetAiResponseRequest;
+import oldman.medinyang.dto.chat.ParseImageRequest;
 import oldman.medinyang.service.ChatService;
 import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
@@ -34,4 +35,8 @@ public class ChatController {
         return ResponseEntity.ok(chatService.sendMessage(request.getContent()));
     }
 
+    @PostMapping("/ocr")
+    public ResponseEntity<ChatDto> parseImage(@RequestBody ParseImageRequest request) {
+        return ResponseEntity.ok(chatService.sendImage(request.getImageUrl()));
+    }
 }

@@ -12,8 +12,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class ChatService {
 
@@ -21,6 +23,7 @@ public class ChatService {
     private final ChatRepository chatRepository;
     private final OpenAiClient openAiClient;
 
+    @Transactional(readOnly = true)
     public Page<ChatDto> viewList(Pageable pageable) {
         return chatRepository.findAll(pageable)
             .map(ChatDto::new);
@@ -30,6 +33,13 @@ public class ChatService {
         String reply = openAiClient.getMedinyangResponse(userEntry, getContext());
 
         Chat created = chatRepository.save(new Chat(userEntry, reply));
+        return new ChatDto(created);
+    }
+
+    public ChatDto sendImage(String imageUrl) {
+        String response = openAiClient.getMedinyangOcrResponse(imageUrl);
+
+        Chat created = chatRepository.save(new Chat(imageUrl, response));
         return new ChatDto(created);
     }
 

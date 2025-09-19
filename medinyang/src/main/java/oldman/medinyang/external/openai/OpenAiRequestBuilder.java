@@ -2,6 +2,7 @@ package oldman.medinyang.external.openai;
 
 
 import static oldman.medinyang.external.openai.PromptManager.MEDINYANG_CHAT_BASE_PROMPT;
+import static oldman.medinyang.external.openai.PromptManager.MEDINYANG_OCR_BASE_PROMPT;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,14 +46,15 @@ public class OpenAiRequestBuilder {
     }
 
     private static List<VisionRequest.InputItem> buildInputItem(String imageUrl) {
+        VisionRequest.InputItem inputItem = new InputItem(MEDINYANG_OCR_BASE_PROMPT.get(0));
+
         VisionRequest.Content content = new Content();
         content.setType("input_image");
         content.setImage_url(imageUrl);
         //content.setDetail("auto");
 
-        InputItem inputItem = new InputItem();
         inputItem.setRole("user");
-        inputItem.setContent(List.of(content));
+        inputItem.addContent(content);
         return List.of(inputItem);
     }
 

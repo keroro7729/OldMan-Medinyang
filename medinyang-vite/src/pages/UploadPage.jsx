@@ -1,3 +1,4 @@
+// ✅ UploadPage.jsx - 발표용 프로토타입 (OCR 이미지 URL 전송 + 채팅 페이지 이동)
 import React, { useState, useRef } from "react";
 import TopHeader from "../components/TopHeader";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +10,8 @@ const UploadPage = () => {
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
   const validExtensions = ["jpg", "jpeg", "png", "bmp"];
+
+  const demoImageUrl = "https://keroro7729.github.io/image/처방전.jpg";
 
   // ✅ 파일 선택창 열기
   const triggerFileSelect = () => fileInputRef.current.click();
@@ -31,18 +34,35 @@ const UploadPage = () => {
     setError("");
   };
 
-  // ✅ 업로드 버튼 클릭 시 (현재는 더미 처리)
+  // ✅ 업로드 버튼 클릭 시
   const handleUpload = async () => {
     if (!selectedFile) return alert("⚠️ 파일을 먼저 선택해주세요.");
 
-    // 👉 실제 API 연결 전, ChatPage로 넘기면서 더미 데이터 전달
-    navigate("/chat", {
-      state: {
-        fromUpload: true,
-        initialMessage:
-          "✅ 파일이 업로드되었어요! OCR 분석 결과는 여기에 표시될 예정입니다.",
-      },
-    });
+    try {
+      // 👉 프로토타입: 실제 업로드 없이 이미 호스팅된 이미지 URL 사용
+      const res = await fetch("http://localhost:8080/api/chats/ocr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl: demoImageUrl }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      // const data = await res.json(); // 응답 사용 안 함
+      // OCR 결과는 ChatPage에서 GET 요청으로 불러오기 때문에 여기서는 무시
+
+      // ✅ 채팅 페이지로 이동
+      navigate("/chat", {
+        state: {
+          fromUpload: true,
+          initialMessage:
+            "✅ 이미지 업로드 완료! OCR 분석 결과는 채팅창에서 확인할 수 있어요.",
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      alert("서버와 연결할 수 없습니다. 잠시 후 다시 시도해주세요.");
+    }
   };
 
   return (
@@ -52,10 +72,10 @@ const UploadPage = () => {
         justifyContent: "center",
         width: "100%",
         height: "100vh",
-        backgroundColor: "#D1E3FF", // 바깥 배경 (LoadingPage랑 동일)
+        backgroundColor: "#D1E3FF",
       }}
     >
-      {/* 중앙 고정 레이아웃 */}
+      {/* 중앙 컨테이너 */}
       <div
         style={{
           position: "relative",
@@ -67,12 +87,11 @@ const UploadPage = () => {
           flexDirection: "column",
         }}
       >
-        {/* 상단 헤더 */}
         <TopHeader title="의료 기록 업로드" />
 
-        {/* 콘텐츠 */}
+        {/* 콘텐츠 영역 */}
         <div style={{ padding: "20px", overflowY: "auto", flex: 1 }}>
-          {/* 파일 선택 영역 */}
+          {/* 파일 선택 */}
           <div
             style={{
               display: "flex",
@@ -118,22 +137,14 @@ const UploadPage = () => {
             />
           </div>
 
-          {/* 안내문구 */}
-          <p
-            style={{ fontSize: "12px", color: "#9CA3AF", marginBottom: "24px" }}
-          >
+          {/* 안내 문구 */}
+          <p style={{ fontSize: "12px", color: "#9CA3AF", marginBottom: "24px" }}>
             10MB 이하의 이미지 파일만 등록할 수 있습니다. (JPG, JPEG, PNG, BMP)
           </p>
 
           {/* 업로드 가이드 */}
           <div style={{ marginBottom: "24px" }}>
-            <h3
-              style={{
-                fontSize: "14px",
-                fontWeight: "bold",
-                marginBottom: "8px",
-              }}
-            >
+            <h3 style={{ fontSize: "14px", fontWeight: "bold", marginBottom: "8px" }}>
               📸 사진 업로드 시 주의사항
             </h3>
             <div

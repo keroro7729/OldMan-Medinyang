@@ -25,7 +25,7 @@ const ChatInput = ({ onSend, onStop, isReplying }) => {
 
   // ✅ 전송 버튼 클릭 시 동작: 전송 or 중단
   const handleButtonClick = () => {
-    if (isReplying) onStop();
+    if (isReplying) onStop && onStop();
     else handleSend();
   };
 
@@ -41,9 +41,7 @@ const ChatInput = ({ onSend, onStop, isReplying }) => {
 
   // ✅ 카메라 버튼 클릭 시 업로드 페이지로 이동
   const handleCameraClick = () => {
-    if (!isReplying) {
-      navigate("/upload");
-    }
+    if (!isReplying) navigate("/upload");
   };
 
   return (
@@ -63,7 +61,6 @@ const ChatInput = ({ onSend, onStop, isReplying }) => {
           borderRadius: "999px",
           padding: "10px 20px",
           fontSize: "15px",
-          color: "#555",
           boxShadow: "inset 0 0 0 1px #ddd",
         }}
       >
@@ -80,6 +77,9 @@ const ChatInput = ({ onSend, onStop, isReplying }) => {
             outline: "none",
             fontSize: "16px",
             backgroundColor: "transparent",
+            color: "#111",                  // ✅ 글자색 명시
+            WebkitTextFillColor: "#111",    // ✅ iOS/Safari 자동완성 대비
+            caretColor: "#111",             // ✅ 커서색
           }}
         />
       </div>
@@ -98,11 +98,7 @@ const ChatInput = ({ onSend, onStop, isReplying }) => {
         {/* ✅ 왼쪽: 카메라 + 프리셋 버튼 */}
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           {/* 카메라 → 업로드 페이지로 이동 */}
-          <button
-            onClick={handleCameraClick}
-            disabled={isReplying}
-            style={iconBtnStyle}
-          >
+          <button onClick={handleCameraClick} disabled={isReplying} style={iconBtnStyle}>
             <FontAwesomeIcon icon={faCamera} />
           </button>
 
@@ -132,11 +128,7 @@ const ChatInput = ({ onSend, onStop, isReplying }) => {
           onClick={handleButtonClick}
           disabled={!isActive && !isReplying}
           style={{
-            backgroundColor: isReplying
-              ? "#B1B1B1"
-              : isActive
-              ? "#3B82F6"
-              : "#bcbcbc",
+            backgroundColor: isReplying ? "#B1B1B1" : isActive ? "#3B82F6" : "#bcbcbc",
             border: "none",
             borderRadius: "50%",
             width: "36px",

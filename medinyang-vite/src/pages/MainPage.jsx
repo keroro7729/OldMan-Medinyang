@@ -1,94 +1,176 @@
-// ✅ MainPage.jsx - 메디냥 메인 홈 화면 구성
-import React, { useEffect, useState } from "react";
-import Greeting from "../components/Main/Greeting";
-import ActionButtons from "../components/Main/ActionButtons";
-import ChallengeSummary from "../components/Main/ChallengeSummary";
-import BottomNav from "../components/Main/BottomNav";
-import UserSwitcher from "../components/Main/UserSwitcher";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faShoppingBag } from "@fortawesome/free-solid-svg-icons";
+
+import cat1 from "../assets/cat1.png";
+import bgMain from "../assets/bg-main.png"; // ✅ 배경 이미지 import
+import BottomNav from "../components/BottomNav"; // ✅ 하단 네비게이션 컴포넌트 import
 
 const MainPage = () => {
-  const [userName, setUserName] = useState("사용자"); // 기본 유저 이름
-
-  // ✅ 로컬 스토리지에서 현재 유저 정보 불러오기
-  useEffect(() => {
-    const stored = localStorage.getItem("currentUser");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (parsed.name) setUserName(parsed.name); // 유저 이름 설정
-      } catch (e) {
-        console.error("currentUser 파싱 오류:", e);
-      }
-    }
-  }, []);
+  const navigate = useNavigate();
+  const [showInventory, setShowInventory] = useState(false);
 
   return (
-    <div style={styles.page}>
-      {/* ✅ 유저 전환 드롭다운 (좌측 상단 고정) */}
-      <div style={styles.switcherBox}>
-        <UserSwitcher />
-      </div>
+    <>
+      <div className="main-wrapper">
+        <div className="main-container">
+          {/* 상단 장바구니 */}
+          <div className="cart-button">
+            <button onClick={() => setShowInventory(true)}>
+              <FontAwesomeIcon
+                icon={faShoppingBag}
+                size="lg"
+                className="cart-icon"
+              />
+            </button>
+          </div>
 
-      {/* ✅ 유저 인사 영역 (로고와 텍스트 포함) */}
-      <Greeting />
+          {/* 인벤토리 모달 */}
+          {showInventory && (
+            <div className="modal-overlay">
+              <div className="modal-box">
+                <p>인벤토리 (빈 화면)</p>
+                <button
+                  className="modal-close"
+                  onClick={() => setShowInventory(false)}
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          )}
 
-      {/* ✅ 메디냥 주요 기능 진입 버튼 */}
-      <ActionButtons />
+          {/* 메인 콘텐츠 */}
+          <div className="main-content">
+            {/* 말풍선 */}
+            <div className="speech-bubble">
+              <p>오늘의 건강 상태는 어떻냥?</p>
+              <div className="bubble-tail"></div>
+            </div>
 
-      {/* ✅ 챌린지 진행 상태 요약 영역 */}
-      <div style={styles.challengeWrapper}>
-        <div style={styles.challengeTitleBox}>
-          <span style={styles.challengeTitleAccent}>꾸준함</span>
-          <span style={styles.challengeTitle}>이 만드는 건강한 습관!</span>
-          <p style={styles.challengeDesc}>
-            현재 {userName}님이 진행중인 챌린지예요
-          </p>
+            {/* 고양이 */}
+            <img src={cat1} alt="cat" className="main-cat" />
+
+            {/* 답변 버튼 */}
+            <button onClick={() => navigate("/chat")} className="answer-btn">
+              답변하러가기 →
+            </button>
+          </div>
+
+          {/* ✅ 하단 네비게이션 (컴포넌트 적용) */}
+          <BottomNav current="main" />
         </div>
-        <ChallengeSummary />
       </div>
 
-      {/* ✅ 하단 탭 네비게이션 */}
-      <BottomNav current="main" />
-    </div>
+      {/* ✅ CSS-in-JS */}
+      <style>{`
+        .main-wrapper {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 100%;
+          height: 100vh;
+          background-color: #d1e3ff;
+        }
+        .main-container {
+          position: relative;
+          max-width: 430px;
+          width: 100%;
+          height: 100%;
+          background-image: url(${bgMain});
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
+        .cart-button {
+          position: absolute;
+          top: 16px;
+          left: 16px;
+        }
+        .cart-icon {
+          color: #4a4a4a;
+        }
+        .modal-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 50;
+        }
+        .modal-box {
+          background: white;
+          width: 300px;
+          height: 400px;
+          border-radius: 16px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+        }
+        .modal-close {
+          margin-top: 16px;
+          color: #2563eb;
+          text-decoration: underline;
+          background: none;
+          border: none;
+          cursor: pointer;
+        }
+        .main-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          flex: 1;
+        }
+        .speech-bubble {
+          position: relative;
+          background: rgba(255, 255, 255, 0.9);
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+          border-radius: 16px;
+          padding: 8px 16px;
+          margin-bottom: 16px;
+          font-weight: 600;
+          color: #333;
+        }
+        .bubble-tail {
+          position: absolute;
+          bottom: -8px;
+          left: 24px;
+          width: 16px;
+          height: 16px;
+          background: rgba(255, 255, 255, 0.9);
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+          transform: rotate(45deg);
+        }
+        .main-cat {
+          width: 160px;
+          height: auto;
+        }
+        .answer-btn {
+          margin-top: 24px;
+          background: #3b6e22;
+          color: white;
+          padding: 12px 24px;
+          border-radius: 9999px;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          border: none;
+          cursor: pointer;
+          font-size: 16px;
+          font-weight: 600;
+        }
+        .answer-btn:hover {
+          background: #2f541a;
+        }
+      `}</style>
+    </>
   );
-};
-
-// ✅ 인라인 스타일 정의
-const styles = {
-  page: {
-    width: "100%",
-    backgroundColor: "#f9f9f9",
-    paddingBottom: "80px", // 하단 탭 공간 확보
-    position: "relative",
-    overflow: "visible",
-  },
-  switcherBox: {
-    position: "absolute",
-    top: "50px",
-    left: "1px",
-  },
-  challengeWrapper: {
-    paddingLeft: "20px",
-    paddingRight: "20px",
-    paddingTop: "10px",
-  },
-  challengeTitleBox: {
-    marginBottom: "12px",
-  },
-  challengeTitleAccent: {
-    fontSize: "20px",
-    fontWeight: "bold",
-    color: "#3B82F6", // 메디냥 메인 블루 색상
-  },
-  challengeTitle: {
-    fontSize: "20px",
-    fontWeight: "bold",
-  },
-  challengeDesc: {
-    fontSize: "12px",
-    color: "#6B7280",
-    marginTop: "-2px",
-  },
 };
 
 export default MainPage;

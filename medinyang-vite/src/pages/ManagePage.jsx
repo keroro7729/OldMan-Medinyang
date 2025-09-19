@@ -1,103 +1,186 @@
+// ✅ ManagePage.jsx
 import React, { useState } from "react";
-import TopHeader from "../components/common/TopHeader";
-import { useNavigate } from "react-router-dom";
-import PlanResultCard from "../components/Manage/PlanResultCard";
-import ChallengeContent from "../components/Manage/ChallengeContent";
-import BottomNav from "../components/Main/BottomNav";
-
+import TopHeader from "../components/TopHeader";
+import BottomNav from "../components/BottomNav";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 const ManagePage = () => {
-  const navigate = useNavigate();
-  const [tab, setTab] = useState("plan");
+  const [activeTab, setActiveTab] = useState("전체");
 
+  // ✅ 체중 더미데이터
+  const weightData = [
+    { date: "09-01", weight: 70 },
+    { date: "09-05", weight: 71 },
+    { date: "09-10", weight: 70.5 },
+    { date: "09-15", weight: 69.8 },
+    { date: "09-20", weight: 70.2 },
+  ];
 
-  const handleGoToChat = () => {
-    navigate("/chat");
-  };
+  // ✅ 주간 요약 더미데이터
+  const weeklySummary = [
+    "요즘 머리가 자주 아픔",
+    "수면 시간이 불규칙함",
+    "카페인 섭취가 잦음",
+    "생활습관 개선 필요 → 규칙적인 수면, 물 섭취 권장",
+  ];
 
   return (
-    <div style={styles.page}>
-      <TopHeader title="맞춤 관리" />
+    <div style={styles.wrapper}>
+      <div style={styles.container}>
+        {/* 상단 헤더 */}
+        <TopHeader title="나의 건강 DATA" />
 
-      <div style={styles.tabContainer}>
-        <button
-          style={{ ...styles.tab, ...(tab === "plan" ? styles.activeTab : {}) }}
-          onClick={() => setTab("plan")}
-        >
-          맞춤 플랜
-        </button>
-        <button
-          style={{ ...styles.tab, ...(tab === "challenge" ? styles.activeTab : {}) }}
-          onClick={() => setTab("challenge")}
-        >
-          챌린지
-        </button>
+        {/* 탭 전환 */}
+        <div style={styles.tabContainer}>
+          <button
+            style={{
+              ...styles.tabButton,
+              ...(activeTab === "전체" ? styles.activeTab : {}),
+            }}
+            onClick={() => setActiveTab("전체")}
+          >
+            전체
+          </button>
+          <button
+            style={{
+              ...styles.tabButton,
+              ...(activeTab === "주간" ? styles.activeTab : {}),
+            }}
+            onClick={() => setActiveTab("주간")}
+          >
+            주간
+          </button>
+        </div>
+
+        {/* 콘텐츠 */}
+        <div style={styles.contentArea}>
+          {activeTab === "전체" ? (
+            <>
+              {/* ✅ 체중 차트 */}
+              <div style={styles.card}>
+                <h3 style={styles.cardTitle}>체중 변화 추이</h3>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={weightData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis domain={[68, 72]} />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="weight" stroke="#3B82F6" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* ✅ AI 리포트 */}
+              <div style={styles.card}>
+                <h3 style={styles.cardTitle}>AI 리포트</h3>
+                <p style={styles.reportText}>
+                  최근 체중 변화는 안정적입니다. 건강한 생활습관을 유지하고
+                  있습니다. <br />
+                  앞으로는 수분 섭취와 충분한 수면을 신경 쓰면 더 좋습니다.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* ✅ 주간 요약 */}
+              <div style={styles.card}>
+                <h3 style={styles.cardTitle}>주간 건강 요약</h3>
+                <ul>
+                  {weeklySummary.map((item, idx) => (
+                    <li key={idx} style={styles.reportText}>
+                      - {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* 하단 네비게이션 */}
+        <div style={styles.bottomNavWrapper}>
+          <BottomNav current="manage" />
+        </div>
       </div>
-
-      <div style={styles.content}>
-        {tab === "plan" ? (
-          <>
-            <button onClick={handleGoToChat} style={styles.consultButton}>
-              플랜 상담하러 가기
-            </button>
-            <hr style={styles.divider} />
-            <PlanResultCard />
-          </>
-        ) : (
-          <ChallengeContent />
-        )}
-      </div>
-
-      <BottomNav current="manage" />
     </div>
   );
 };
 
 const styles = {
-  page: {
-    width: "100vw",
-    height: "100dvh",
-    backgroundColor: "#f9f9f9",
-    boxSizing: "border-box",
+  wrapper: {
+    display: "flex",
+    justifyContent: "center",
+    width: "100%",
+    minHeight: "100vh",
+    backgroundColor: "#D1E3FF",
+  },
+  container: {
+    position: "relative",
+    maxWidth: "430px",
+    width: "100%",
+    minHeight: "100vh",
+    backgroundColor: "#f5f5f5",
+    display: "flex",
+    flexDirection: "column",
+    paddingBottom: "80px", // 네비게이션 여백
   },
   tabContainer: {
     display: "flex",
-    justifyContent: "center",
-    marginTop: "12px",
-    borderBottom: "1px solid #ddd",
+    gap: "8px",
+    padding: "12px 20px",
   },
-  tab: {
+  tabButton: {
     flex: 1,
-    padding: "12px 0",
-    backgroundColor: "#f3f4f6",
-    border: "none",
-    fontWeight: "bold",
-    color: "#6b7280",
+    padding: "8px",
+    borderRadius: "20px",
+    border: "1px solid #ccc",
+    background: "#f5f5f5",
     cursor: "pointer",
+    fontSize: "14px",
   },
   activeTab: {
-    backgroundColor: "#ffffff",
-    color: "#111827",
-    borderBottom: "2px solid #3B82F6",
+    background: "#3B82F6",
+    color: "#fff",
+    border: "1px solid #3B82F6",
   },
-  content: {
-    padding: "16px",
+  contentArea: {
+    flex: 1,
+    overflowY: "auto",
+    padding: "16px 20px",
   },
-  consultButton: {
-    width: "100%",
-    padding: "16px",
-    backgroundColor: "#BFDBFE",
-    color: "#1D4ED8",
-    fontWeight: "bold",
-    border: "none",
+  card: {
+    background: "#fff",
     borderRadius: "12px",
-    fontSize: "16px",
+    padding: "16px",
     marginBottom: "16px",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
   },
-  divider: {
-    margin: "16px 0",
-    border: "none",
-    borderTop: "1px solid #e5e7eb",
+  cardTitle: {
+    marginBottom: "8px",
+    fontSize: "16px",
+    fontWeight: "bold",
+  },
+  reportText: {
+    fontSize: "14px",
+    color: "#333",
+    lineHeight: "1.4",
+  },
+  bottomNavWrapper: {
+    position: "fixed",
+    bottom: 0,
+    left: "50%",
+    transform: "translateX(-50%)",
+    width: "100%",
+    maxWidth: "430px",
+    zIndex: 30,
   },
 };
 

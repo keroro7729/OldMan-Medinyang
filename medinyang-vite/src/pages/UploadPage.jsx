@@ -1,6 +1,5 @@
 import React, { useState, useRef } from "react";
-import TopHeader from "../components/common/TopHeader";
-import BottomNav from "../components/Main/BottomNav";
+import TopHeader from "../components/TopHeader";
 import { useNavigate } from "react-router-dom";
 
 const UploadPage = () => {
@@ -11,11 +10,14 @@ const UploadPage = () => {
   const navigate = useNavigate();
   const validExtensions = ["jpg", "jpeg", "png", "bmp"];
 
+  // ✅ 파일 선택창 열기
   const triggerFileSelect = () => fileInputRef.current.click();
 
+  // ✅ 파일 선택 시 처리
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     const ext = file.name.split(".").pop().toLowerCase();
     if (!validExtensions.includes(ext)) {
       setSelectedFile(null);
@@ -23,67 +25,54 @@ const UploadPage = () => {
       setError("❗ 이미지 파일 형식이 아닙니다. (JPG, JPEG, PNG, BMP만 허용)");
       return;
     }
+
     setSelectedFile(file);
     setFileName(file.name);
     setError("");
   };
 
+  // ✅ 업로드 버튼 클릭 시 (현재는 더미 처리)
   const handleUpload = async () => {
     if (!selectedFile) return alert("⚠️ 파일을 먼저 선택해주세요.");
-    try {
-      const formData = new FormData();
-      formData.append("image", selectedFile);
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/medical-images/upload`,
-        {
-          method: "POST",
-          headers: {
-            "ngrok-skip-browser-warning": "69420", // ✅ 이거만 추가
-          },
-          body: formData,
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) throw new Error("업로드 실패");
-
-      const result = await response.json();
-      console.log("✅ 서버 응답:", result);
-
-      navigate("/chat", {
-        state: {
-          fromUpload: true,
-          initialMessage: result.longDescription,
-        },
-      });
-    } catch (err) {
-      console.error(err);
-      alert("❌ 업로드 실패: " + err.message);
-    }
+    // 👉 실제 API 연결 전, ChatPage로 넘기면서 더미 데이터 전달
+    navigate("/chat", {
+      state: {
+        fromUpload: true,
+        initialMessage:
+          "✅ 파일이 업로드되었어요! OCR 분석 결과는 여기에 표시될 예정입니다.",
+      },
+    });
   };
 
   return (
     <div
       style={{
-        height: "100dvh",
-        width: "100vw",
-        backgroundColor: "#f5f5f5",
-        overflow: "hidden",
-        position: "relative",
+        display: "flex",
+        justifyContent: "center",
+        width: "100%",
+        height: "100vh",
+        backgroundColor: "#D1E3FF", // 바깥 배경 (LoadingPage랑 동일)
       }}
     >
+      {/* 중앙 고정 레이아웃 */}
       <div
         style={{
-          width: "100",
+          position: "relative",
+          maxWidth: "430px",
+          width: "100%",
           height: "100%",
+          backgroundColor: "#f5f5f5",
           display: "flex",
           flexDirection: "column",
-          backgroundColor: "#f5f5f5",
         }}
       >
+        {/* 상단 헤더 */}
         <TopHeader title="의료 기록 업로드" />
+
+        {/* 콘텐츠 */}
         <div style={{ padding: "20px", overflowY: "auto", flex: 1 }}>
+          {/* 파일 선택 영역 */}
           <div
             style={{
               display: "flex",
@@ -128,11 +117,15 @@ const UploadPage = () => {
               style={{ display: "none" }}
             />
           </div>
+
+          {/* 안내문구 */}
           <p
             style={{ fontSize: "12px", color: "#9CA3AF", marginBottom: "24px" }}
           >
             10MB 이하의 이미지 파일만 등록할 수 있습니다. (JPG, JPEG, PNG, BMP)
           </p>
+
+          {/* 업로드 가이드 */}
           <div style={{ marginBottom: "24px" }}>
             <h3
               style={{
@@ -166,6 +159,8 @@ const UploadPage = () => {
             </ul>
           </div>
         </div>
+
+        {/* 업로드 버튼 */}
         <div style={{ padding: "20px" }}>
           <button
             onClick={handleUpload}
@@ -186,7 +181,6 @@ const UploadPage = () => {
           </button>
         </div>
       </div>
-      <BottomNav current="manage" />
     </div>
   );
 };

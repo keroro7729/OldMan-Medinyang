@@ -1,191 +1,196 @@
 // ✅ HistoryPage.jsx
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import HistoryList from "../components/History/HistoryList";
-import TopHeader from "../components/common/TopHeader";
-import ScrollAwareBottomNav from "../components/common/ScrollAwareBottomNav";
-import ScrollToTopButton from "../components/common/ScrollToTopButton";
+import TopHeader from "../components/TopHeader";
+import BottomNav from "../components/BottomNav"; // ✅ 하단 네비게이션
 
 // 한 페이지에 불러올 항목 수
 const PAGE_SIZE = 10;
 
 const HistoryPage = () => {
   const navigate = useNavigate();
-  const today = new Date().toISOString().slice(0, 10); // 오늘 날짜 (YYYY-MM-DD)
-  
-  // 상태 관리 변수들
-  const [historyData, setHistoryData] = useState([]);
+  const today = new Date().toISOString().slice(0, 10);
+
+  // 상태 관리
+  const [allData, setAllData] = useState([]); // 전체 데이터
+  const [historyData, setHistoryData] = useState([]); // 필터 적용 데이터
   const [filterType, setFilterType] = useState("전체");
   const [startDate, setStartDate] = useState("2023-01-01");
   const [endDate, setEndDate] = useState(today);
   const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
 
-  // ✅ 의료 이력 API 호출
-  const fetchHistoryData = async () => {
+  // ✅ 더미 데이터 소스
+  const hospitals = [
+    "춘천세브란스병원",
+    "강원대학교병원",
+    "서울아산병원",
+    "메디냥병원",
+    "분당서울대병원",
+  ];
+  const diagnoses = [
+    "혈압 관리 처방",
+    "종합검진 결과: 이상 없음",
+    "혈액검사 결과: 빈혈 소견",
+    "X-ray 검사: 정상",
+    "간 기능 검사: 주의 필요",
+    "콜레스테롤 수치 관리 필요",
+    "소화기 검진: 약간의 염증",
+  ];
+
+  // ✅ 전체 더미 데이터 생성 (처음 로드 시)
+  useEffect(() => {
+    const dummy = Array.from({ length: 30 }, (_, i) => {
+      const hospital = hospitals[Math.floor(Math.random() * hospitals.length)];
+      const diagnosis = diagnoses[Math.floor(Math.random() * diagnoses.length)];
+      const type = i % 2 === 0 ? "처방전" : "건강검진";
+      const date = `2025-09-${String(i + 1).padStart(2, "0")}`;
+      return { id: i + 1, hospital, type, diagnosis, date };
+    });
+    setAllData(dummy);
+  }, []);
+
+  // ✅ 필터 적용
+  useEffect(() => {
     setLoading(true);
-    try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/medical-images/history`,
-        {
-          params: {
-            startDate,     // 시작일 필터
-            endDate,       // 종료일 필터
-            page,          // 현재 페이지
-            size: PAGE_SIZE,
-            sort: "visitDate,desc", // 방문일 내림차순 정렬
-          },
-          withCredentials: true,
-          headers: {
-            "ngrok-skip-browser-warning": "69420", // ngrok 경고 무시용 헤더
-          },
-        }
+    setTimeout(() => {
+      const filteredByDate = allData.filter(
+        (item) => item.date >= startDate && item.date <= endDate
       );
 
-      const { status, data, message } = res.data;
+      const filtered = filteredByDate.filter(
+        (item) => filterType === "전체" || item.type === filterType
+      );
 
-      // API 내부 응답 status가 200이 아니면 오류 처리
-      if (status !== 200) throw new Error(message || "조회 실패");
-
-      // ✅ 데이터 필터링 및 가공
-      const transformed = data.content
-        .filter((item) => filterType === "전체" || item.type === filterType)
-        .map((item) => ({
-          id: item.historyId,
-          hospital: item.hospitalName,
-          type: item.type,
-          diagnosis: item.shortDescription,
-          date: item.visitDate.replace(/\./g, "-"),
-        }));
-
-      setHistoryData(transformed);
-      setTotalPages(data.totalPages);
-      setError("");
-    } catch (err) {
-      console.error("❌ 의료 이력 요청 실패:", err);
-      setError("의료 이력을 불러오지 못했습니다.");
-    } finally {
+      const startIdx = page * PAGE_SIZE;
+      const endIdx = startIdx + PAGE_SIZE;
+      setHistoryData(filtered.slice(startIdx, endIdx));
+      setTotalPages(Math.ceil(filtered.length / PAGE_SIZE) || 1);
       setLoading(false);
-    }
-  };
-
-  // ✅ 필터 변경이나 페이지 이동 시 이력 새로 불러오기
-  useEffect(() => {
-    fetchHistoryData();
-  }, [page, startDate, endDate, filterType]);
+    }, 300);
+  }, [allData, page, startDate, endDate, filterType]);
 
   return (
-    <div style={styles.page}>
-      {/* 상단 고정 헤더 */}
-      <TopHeader title="의료 이력 관리" />
-
+    <div style={styles.wrapper}>
       <div style={styles.container}>
-        {/* 날짜 및 유형 필터 */}
-        <div style={styles.filterContainer}>
-          <div style={styles.filters}>
-            <label>
-              시작일:
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                style={styles.input}
-              />
-            </label>
-            <label>
-              종료일:
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                style={styles.input}
-              />
-            </label>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              style={{ ...styles.input, minWidth: "110px" }}
-            >
-              <option value="전체">전체</option>
-              <option value="처방전">처방전</option>
-              <option value="건강검진">건강검진</option>
-            </select>
+        {/* ✅ 상단 고정 영역 (헤더 + 필터) */}
+        <div style={styles.fixedHeader}>
+          <TopHeader title="의료 이력 관리" />
+
+          <div style={styles.filterContainer}>
+            <div style={styles.filters}>
+              <label>
+                시작일:
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setPage(0);
+                    setStartDate(e.target.value);
+                  }}
+                  style={styles.input}
+                />
+              </label>
+              <label>
+                종료일:
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    setPage(0);
+                    setEndDate(e.target.value);
+                  }}
+                  style={styles.input}
+                />
+              </label>
+              <select
+                value={filterType}
+                onChange={(e) => {
+                  setPage(0);
+                  setFilterType(e.target.value);
+                }}
+                style={{ ...styles.input, minWidth: "110px" }}
+              >
+                <option value="전체">전체</option>
+                <option value="처방전">처방전</option>
+                <option value="건강검진">건강검진</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* 의료 이력 목록 출력 */}
-        <div style={styles.listWrapper}>
+        {/* ✅ 리스트 스크롤 영역 */}
+        <div style={styles.scrollArea}>
           {loading ? (
             <p>불러오는 중입니다...</p>
-          ) : error ? (
-            <p style={{ color: "red" }}>{error}</p>
           ) : historyData.length === 0 ? (
             <p>조회된 이력이 없습니다.</p>
           ) : (
             <HistoryList
               data={historyData}
-              onItemClick={(id) => navigate(`/history/${id}`)} // 클릭 시 상세 페이지 이동
+              onItemClick={(id) => navigate(`/history/${id}`)}
             />
           )}
+
+          {/* 페이지네이션 */}
+          <div style={styles.pagination}>
+            <button
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+              style={styles.pageButton}
+            >
+              이전
+            </button>
+            <span style={{ margin: "0 12px" }}>
+              {page + 1} / {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page >= totalPages - 1}
+              style={styles.pageButton}
+            >
+              다음
+            </button>
+          </div>
         </div>
 
-        {/* 페이지네이션 컨트롤 */}
-        <div style={styles.pagination}>
-          <button
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            disabled={page === 0}
-            style={styles.pageButton}
-          >
-            이전
-          </button>
-          <span style={{ margin: "0 12px" }}>
-            {page + 1} / {totalPages}
-          </span>
-          <button
-            onClick={() => setPage((p) => p + 1)}
-            disabled={page >= totalPages - 1}
-            style={styles.pageButton}
-          >
-            다음
-          </button>
+        {/* ✅ 하단 네비게이션 (고정) */}
+        <div style={styles.bottomNavWrapper}>
+          <BottomNav current="upload" />
         </div>
       </div>
-
-      {/* 하단 네비게이션 및 상단 이동 버튼 */}
-      <ScrollAwareBottomNav current="history" />
-      <ScrollToTopButton />
     </div>
   );
 };
 
-
 const styles = {
-  page: {
+  wrapper: {
+    display: "flex",
+    justifyContent: "center",
+    width: "100%",
+    minHeight: "100vh",
+    backgroundColor: "#D1E3FF",
+  },
+  container: {
+    position: "relative",
+    maxWidth: "430px",
     width: "100%",
     minHeight: "100vh",
     backgroundColor: "#f5f5f5",
-    overflowX: "hidden",
-    margin: "0 auto",
     display: "flex",
     flexDirection: "column",
-    alignItems: "center",
   },
-  container: {
-    width: "100%",
-    maxWidth: "600px",
-    padding: "0 20px 100px",
-    boxSizing: "border-box",
-  },
-  filterContainer: {
+  fixedHeader: {
     position: "sticky",
     top: 0,
+    zIndex: 20,
     backgroundColor: "#f5f5f5",
-    padding: "16px 0 10px",
-    zIndex: 10,
     borderBottom: "1px solid #e0e0e0",
+  },
+  filterContainer: {
+    padding: "12px 20px",
   },
   filters: {
     display: "flex",
@@ -200,14 +205,17 @@ const styles = {
     backgroundColor: "#fff",
     fontSize: "14px",
   },
-  listWrapper: {
-    marginTop: "16px",
+  scrollArea: {
+    flex: 1,
+    overflowY: "auto",
+    padding: "16px 20px 80px", // ✅ 하단 네비 공간 확보
   },
   pagination: {
     marginTop: "20px",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
+    paddingBottom: "20px",
   },
   pageButton: {
     padding: "6px 14px",
@@ -217,10 +225,15 @@ const styles = {
     border: "none",
     borderRadius: "6px",
     cursor: "pointer",
-    disabled: {
-      opacity: 0.5,
-      cursor: "not-allowed",
-    },
+  },
+  bottomNavWrapper: {
+    position: "fixed",
+    bottom: 0,
+    left: "50%",
+    transform: "translateX(-50%)",
+    width: "100%",
+    maxWidth: "430px",
+    zIndex: 30,
   },
 };
 

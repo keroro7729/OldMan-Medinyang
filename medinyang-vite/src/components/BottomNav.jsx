@@ -19,7 +19,7 @@ const BottomNav = ({ current }) => {
         onClick={() => navigate("/main")}
         className={`nav-btn ${current === "main" ? "active" : ""}`}
       >
-        <FontAwesomeIcon icon={faPaw} size="lg" />
+        <FontAwesomeIcon icon={faPaw} size="2x" />
       </button>
 
       {/* 챗 */}
@@ -27,7 +27,7 @@ const BottomNav = ({ current }) => {
         onClick={() => navigate("/chat")}
         className={`nav-btn ${current === "chat" ? "active" : ""}`}
       >
-        <FontAwesomeIcon icon={faCommentDots} size="lg" />
+        <FontAwesomeIcon icon={faCommentDots} size="2x" />
       </button>
 
       {/* 업로드 */}
@@ -35,7 +35,7 @@ const BottomNav = ({ current }) => {
         onClick={() => navigate("/history")}
         className={`nav-btn ${current === "history" ? "active" : ""}`}
       >
-        <FontAwesomeIcon icon={faFolder} size="lg" />
+        <FontAwesomeIcon icon={faFolder} size="2x" />
       </button>
 
       {/* 맞춤관리 */}
@@ -43,31 +43,34 @@ const BottomNav = ({ current }) => {
         onClick={() => navigate("/manage")}
         className={`nav-btn ${current === "manage" ? "active" : ""}`}
       >
-        <FontAwesomeIcon icon={faChartBar} size="lg" />
+        <FontAwesomeIcon icon={faChartBar} size="2x" />
       </button>
 
-      {/* ✅ CSS-in-JS */}
+      {/* ✅ CSS */}
       <style>{`
         .bottom-nav {
-          height: 64px;
-          background: white;
+          height: 72px;
           display: flex;
           justify-content: space-around;
           align-items: center;
-          box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.1);
+          background: transparent; /* ✅ 배경 제거 */
         }
         .nav-btn {
           background: none;
           border: none;
           cursor: pointer;
-          color: #666;
+          color: #999;
           display: flex;
           align-items: center;
           justify-content: center;
           flex: 1;
+          transition: color 0.2s ease;
         }
         .nav-btn.active {
           color: #2C7EDB; /* ✅ 활성화된 페이지 색상 */
+        }
+        .nav-btn:hover {
+          color: #5C72BA; /* ✅ hover 효과 */
         }
       `}</style>
     </div>

@@ -1,12 +1,10 @@
 package oldman.medinyang.controller;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import oldman.medinyang.dto.chat.ChatDto;
 import oldman.medinyang.dto.chat.GetAiResponseRequest;
 import oldman.medinyang.dto.chat.ParseImageRequest;
 import oldman.medinyang.service.ChatService;
-import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;

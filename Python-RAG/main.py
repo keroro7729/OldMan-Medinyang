@@ -13,6 +13,12 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 # .env 파일에서 환경 변수 로드
 load_dotenv()
 
+# langsmith 추적관찰 
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
+os.environ["LANGCHAIN_PROJECT"] = "김지훈"
+os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
+
 # FastAPI 앱 생성
 app = FastAPI()
 

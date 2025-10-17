@@ -41,11 +41,10 @@ public class PresignService {
 
     public URL presignGet(
             String key,
-            Integer expirySec,
             String responseContentType,
             String responseContentDispostion
     ){
-        int ttl = (expirySec != null ? expirySec : this.expirySec);
+        int ttl = expirySec;
 
         var get = GetObjectRequest.builder()
                 .bucket(bucket)
@@ -54,7 +53,7 @@ public class PresignService {
         if(responseContentType != null && !responseContentType.isBlank()) {
             get.responseContentType(responseContentType);
         }
-        if(responseContentDispostion != null & !responseContentDispostion.isBlank()){
+        if (responseContentDispostion != null & !responseContentDispostion.isBlank()) {
             get.responseContentDisposition(responseContentDispostion);
         }
 

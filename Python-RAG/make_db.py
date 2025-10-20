@@ -1,4 +1,4 @@
-# make_db.py (오류 진단 기능 추가 버전)
+# make_db.py 
 
 import os
 from dotenv import load_dotenv
@@ -43,11 +43,6 @@ def create_and_save_db():
         print("--------------------------------------------------")
         print(f"오류 종류: {type(e).__name__}")
         print(f"오류 메시지: {e}")
-        print("--------------------------------------------------")
-        print("🤔 해결 방법 제안:")
-        print("1. .env 파일에 OPENAI_API_KEY가 올바르게 입력되었는지 확인하세요.")
-        print("2. 예제파일.pdf 파일이 현재 폴더에 있는지 확인하세요.")
-        print("3. 인터넷 연결을 확인하세요.")
 
 if __name__ == "__main__":
     create_and_save_db()

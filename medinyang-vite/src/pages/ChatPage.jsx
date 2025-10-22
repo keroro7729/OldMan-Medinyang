@@ -1,4 +1,4 @@
-// ✅ ChatPage.jsx - 메디냥 AI 챗봇 페이지 (백엔드 연동 + 이전 메시지 페이징)
+// ✅ ChatPage.jsx - 중복 이미지 방지 버전
 import React, { useState, useEffect, useRef } from "react";
 import ChatList from "../components/Chat/ChatList";
 import ChatInput from "../components/Chat/ChatInput";
@@ -6,74 +6,155 @@ import TopHeader from "../components/TopHeader";
 import BottomNav from "../components/BottomNav";
 import { useLocation } from "react-router-dom";
 
+// CSRF(JSON) 유틸
+async function getCsrfToken() {
+  const res = await fetch(`/api/csrf-token`, { credentials: "include" });
+  if (!res.ok) throw new Error(`csrf-token 실패: ${res.status}`);
+  const data = await res.json(); // { token }
+  if (!data?.token) throw new Error("CSRF token 누락");
+  return data.token;
+}
+
 const ChatPage = () => {
   const location = useLocation();
 
-  // 상태
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([]); // { sender, text?, type?, imageUrl?, name?, createdAt? }
   const [isReplying, setIsReplying] = useState(false);
-  const [page, setPage] = useState(0);         // 현재 페이지
-  const [hasMore, setHasMore] = useState(true); // 더 가져올 데이터 존재 여부
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   const chatAreaRef = useRef(null);
 
-//   // ✅ 초기 환영 메시지
-//   useEffect(() => {
-//     setMessages([{ sender: "gpt", text: "오늘은 어떤 건강 고민이 있냥? 🐾" }]);
-//   }, []);
+  // ✅ 업로드 처리 가드 (StrictMode로 인한 이펙트 2회 실행 방지)
+  const processedUploadIdRef = useRef(null);
 
-  // ✅ 업로드 페이지에서 초기 메시지 전달된 경우
-  useEffect(() => {
-    if (location.state?.fromUpload && location.state.initialMessage) {
-      setMessages((prev) => [
-        ...prev,
-        { sender: "gpt", text: location.state.initialMessage },
-      ]);
-    }
-  }, [location.state]);
-
-useEffect(() => {
-  if (location.state?.fromUpload && location.state.initialMessage) {
-    setMessages(prev => {
-      const exists = prev.some(m => m.text === location.state.initialMessage && m.sender === "gpt");
-      if (exists) return prev;
-      return [...prev, { sender: "gpt", text: location.state.initialMessage }];
+  // 아래 헬퍼: 같은 내용이 이미 있으면 추가 안 함
+  const pushUnique = (msg) => {
+    setMessages((prev) => {
+      const exists = prev.some((m) => {
+        // 이미지 메시지는 URL 또는 파일명으로 중복 판단
+        if (msg.type === "image" && m.type === "image") {
+          return (
+            (msg.imageUrl && m.imageUrl === msg.imageUrl) ||
+            (msg.name && m.name === msg.name)
+          );
+        }
+        // 텍스트 메시지는 sender+text 기준
+        if (!msg.type && !m.type) {
+          return m.sender === msg.sender && m.text === msg.text;
+        }
+        return false;
+      });
+      return exists ? prev : [...prev, msg];
     });
-  }
-}, [location.state]);
+  };
 
-  // 이전 메세지 불러오기
+  // 스크롤 하단 고정
+  useEffect(() => {
+    const el = chatAreaRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [messages]);
+
+  // ✅ 업로드 페이지에서 전달된 안내문 + 이미지 미리보기 처리 (중복 방지)
+  useEffect(() => {
+    const st = location.state;
+    if (!st?.fromUpload) return;
+
+    // 1) 안내문(중복 방지)
+    if (st.initialMessage) {
+      pushUnique({ sender: "gpt", text: st.initialMessage });
+    }
+
+    // 2) 이미지 미리보기
+    const uploaded = st.uploaded; // { attachmentId, key, fileName, contentType, previewUrl? }
+    if (!uploaded) return;
+
+    // 이미 같은 attachmentId를 처리했으면 스킵 (StrictMode 2회 방지)
+    if (processedUploadIdRef.current === uploaded.attachmentId) return;
+    processedUploadIdRef.current = uploaded.attachmentId;
+
+    const showPreview = async () => {
+      // presign GET에서 받은 URL이 이미 있으면 즉시
+      if (uploaded.previewUrl) {
+        pushUnique({
+          sender: "gpt",
+          type: "image",
+          imageUrl: uploaded.previewUrl,
+          name: uploaded.fileName,
+        });
+        return;
+      }
+
+      // 없으면 presign GET 요청
+      try {
+        const xsrf = await getCsrfToken();
+        const res = await fetch(`/api/attachments/presign/get`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-XSRF-TOKEN": xsrf,
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            attachmentId: uploaded.attachmentId,
+            inline: true,
+            contentType: uploaded.contentType || "image/png",
+          }),
+        });
+        if (!res.ok) throw new Error(`presign(get) 실패: ${res.status}`);
+        const data = await res.json();
+        pushUnique({
+          sender: "gpt",
+          type: "image",
+          imageUrl: data.downloadUrl,
+          name: uploaded.fileName,
+        });
+      } catch (e) {
+        console.error(e);
+        pushUnique({ sender: "gpt", text: "⚠️ 이미지 미리보기에 실패했냥." });
+      }
+    };
+
+    showPreview();
+    // location.state는 동일 객체 참조로 남을 수 있어, attachmentId만 의존성에 둠
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state?.uploaded?.attachmentId]);
+
+  // 이전 메세지 불러오기 (페이징)
   const fetchMessages = async (pageNumber = 0) => {
     if (!hasMore || isLoading) return;
     setIsLoading(true);
 
     try {
-      const res = await fetch(`http://localhost:8080/api/chats?page=${pageNumber}&size=10`);
+      const res = await fetch(`/api/chats?page=${pageNumber}&size=10`, {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const data = await res.json();
-
-      // 서버에서 받은 메시지를 최신 -> 과거 순서이므로 reverse
       const newMessages = (data.content || [])
-        .slice() // 원본 보호
+        .slice()
         .reverse()
-        .map(item => {
-          return [
-            { sender: "user", text: item.content, createdAt: item.createdAt },
-            { sender: "gpt", text: item.response, createdAt: item.createdAt }
-          ];
-        })
-        .flat();
+        .flatMap((item) => [
+          { sender: "user", text: item.content, createdAt: item.createdAt },
+          { sender: "gpt", text: item.response, createdAt: item.createdAt },
+        ]);
 
-      // 중복 방지: 기존 메시지와 같은 createdAt 메시지는 제외
-      setMessages(prev => {
-        const existingKeys = new Set(prev.map(m => m.createdAt + m.sender));
-        const filtered = newMessages.filter(m => !existingKeys.has(m.createdAt + m.sender));
+      setMessages((prev) => {
+        const keys = new Set(
+          prev.map(
+            (m) => `${m.createdAt}|${m.sender}|${m.text || m.imageUrl || ""}`
+          )
+        );
+        const filtered = newMessages.filter(
+          (m) => !keys.has(`${m.createdAt}|${m.sender}|${m.text || ""}`)
+        );
         return [...filtered, ...prev];
       });
 
-      setPage(data.number + 1);
+      setPage((data.number ?? pageNumber) + 1);
       setHasMore(!data.last);
     } catch (err) {
       console.error(err);
@@ -82,39 +163,37 @@ useEffect(() => {
     }
   };
 
-
-
-  // ✅ 초기 페이지 0 불러오기
+  // 초기 페이지 로드
   useEffect(() => {
     fetchMessages(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ 스크롤 업 이벤트 (최상단 근처 시 이전 페이지 불러오기)
+  // 스크롤 상단 근처 → 다음 페이지
   const handleScroll = () => {
     const chatDiv = chatAreaRef.current;
     if (!chatDiv || isLoading || !hasMore) return;
-
     if (chatDiv.scrollTop < 50) {
       fetchMessages(page);
     }
   };
 
-  // ✅ 사용자 메시지 전송
+  // 사용자 메시지 전송
   const handleSend = async (text) => {
     const content = (text || "").trim();
     if (!content || isReplying) return;
 
     setIsReplying(true);
     try {
-      const res = await fetch("http://localhost:8080/api/chats", {
+      const res = await fetch(`/api/chats`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ content }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const data = await res.json(); // => { content, response, createdAt }
-
+      const data = await res.json(); // { content, response, createdAt }
       const { content: serverContent, response, createdAt } = data || {};
       if (typeof serverContent !== "string" || typeof response !== "string") {
         throw new Error("Invalid schema from /api/chats");
@@ -123,14 +202,15 @@ useEffect(() => {
       setMessages((prev) => [
         ...prev,
         { sender: "user", text: serverContent, createdAt },
-        { sender: "gpt",  text: response,       createdAt },
+        { sender: "gpt", text: response, createdAt },
       ]);
     } catch (err) {
       console.error(err);
-      setMessages((prev) => [
-        ...prev,
-        { sender: "gpt", text: "서버와 연결할 수 없냥. 잠시 후 다시 시도해줘!", error: true },
-      ]);
+      pushUnique({
+        sender: "gpt",
+        text: "서버와 연결할 수 없냥. 잠시 후 다시 시도해줘!",
+        error: true,
+      });
     } finally {
       setIsReplying(false);
     }
@@ -141,16 +221,10 @@ useEffect(() => {
       <div style={styles.container}>
         <TopHeader title="메디냥 AI" />
 
-        {/* 채팅 영역 */}
-        <div
-          style={styles.chatArea}
-          ref={chatAreaRef}
-          onScroll={handleScroll}
-        >
+        <div style={styles.chatArea} ref={chatAreaRef} onScroll={handleScroll}>
           <ChatList messages={messages} />
         </div>
 
-        {/* 입력창 */}
         <div style={styles.inputWrapper}>
           <ChatInput
             onSend={handleSend}
@@ -159,7 +233,6 @@ useEffect(() => {
           />
         </div>
 
-        {/* 하단 네비게이션 */}
         <div style={styles.bottomNavWrapper}>
           <BottomNav current="chat" />
         </div>

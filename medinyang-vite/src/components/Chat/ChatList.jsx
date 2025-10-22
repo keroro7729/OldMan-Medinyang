@@ -15,9 +15,14 @@ const ChatList = ({ messages }) => {
       {/* ✅ 각 메시지를 ChatMessage 컴포넌트로 출력 */}
       {messages.map((msg, idx) => (
         <ChatMessage
-          key={idx}              // 각 메시지의 고유 key
-          sender={msg.sender}    // 보낸 사람 (user 또는 gpt)
-          text={msg.text}        // 메시지 본문
+          key={idx}
+          sender={msg.sender} // "user" | "gpt" | "system"
+          text={msg.text} // 텍스트 본문
+          type={msg.type} // "image" | undefined
+          imageUrl={msg.imageUrl} // 이미지 메시지일 때 URL
+          name={msg.name} // 이미지 파일명(옵션)
+          error={msg.error} // 오류 강조(옵션)
+          createdAt={msg.createdAt} // 중복제거·정렬에 쓰였던 값(옵션)
         />
       ))}
 

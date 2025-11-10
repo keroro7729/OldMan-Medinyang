@@ -6,8 +6,7 @@ import lombok.RequiredArgsConstructor;
 import oldman.medinyang.domain.Chat;
 import oldman.medinyang.dto.chat.ChatDto;
 import oldman.medinyang.external.local.python.PythonClient;
-import oldman.medinyang.external.local.python.dto.ChatReq;
-import oldman.medinyang.external.local.python.dto.ChatRes;
+import oldman.medinyang.external.local.python.dto.PythonAnswerReq;
 import oldman.medinyang.external.openai.OpenAiClient;
 import oldman.medinyang.repository.ChatRepository;
 import org.springframework.data.domain.Page;
@@ -28,7 +27,7 @@ public class ChatService {
     private final PythonClient pythonClient;
 
     public ChatDto ask(String q){
-        String response = pythonClient.ask(new ChatReq(q, "")).answer();
+        String response = pythonClient.ask(new PythonAnswerReq(q, "")).answer();
         Chat created = chatRepository.save(new Chat(q, response));
         return new ChatDto(created);
     }

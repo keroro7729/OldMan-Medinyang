@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import oldman.medinyang.dto.chat.ChatDto;
 import oldman.medinyang.dto.chat.GetAiResponseRequest;
 import oldman.medinyang.dto.chat.ParseImageRequest;
-import oldman.medinyang.external.local.python.dto.ChatReq;
-import oldman.medinyang.external.local.python.dto.ChatRes;
 import oldman.medinyang.service.ChatService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

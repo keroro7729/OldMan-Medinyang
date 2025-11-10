@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import oldman.medinyang.dto.chat.ChatDto;
 import oldman.medinyang.dto.chat.GetAiResponseRequest;
 import oldman.medinyang.dto.chat.ParseImageRequest;
+import oldman.medinyang.external.local.python.dto.ChatReq;
+import oldman.medinyang.external.local.python.dto.ChatRes;
 import oldman.medinyang.service.ChatService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,7 +32,9 @@ public class ChatController {
 
     @PostMapping
     public ResponseEntity<ChatDto> getAiResponse(@RequestBody GetAiResponseRequest request) {
-        return ResponseEntity.ok(chatService.sendMessage(request.getContent()));
+        return ResponseEntity.ok(chatService.ask(request.getContent()));
+
+        //return ResponseEntity.ok(chatService.sendMessage(request.getContent()));
     }
 
     @PostMapping("/ocr")

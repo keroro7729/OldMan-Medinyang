@@ -38,6 +38,9 @@ openai:
     apikey: ${OPENAI_API_KEY}
     baseurl: https://api.openai.com
 
+python:
+    base-url: http://localhost:8000
+
 app:
   storage:
     bucket: ${APP_STORAGE_BUCKET}

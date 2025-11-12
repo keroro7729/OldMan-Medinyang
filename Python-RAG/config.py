@@ -24,9 +24,22 @@ DB_PATH = "db"
 # --- 폴백 키워드 ---
 FALLBACK_KEYWORDS = ["모르겠어요", "없습니다", "제공된 문서에서는 해당 정보를 찾을 수 없습니다", "모르는 내용입니다."]
 
+# 1. Base Retriever가 벡터 DB에서 확보할 문서의 개수 (Recall 확보)
+BASE_K = 20 
+
+# 2. Reranker가 재순위 지정 후 LLM에게 최종 전달할 문서의 개수 (Precision 유지)
+RERANK_K = 6
+
+RERANK_TOP_N = 5  # reranker가 상위 몇 개 문서만 사용할지
+
+
+
 # LangSmith 환경 변수 설정 실행
 def setup_langsmith():
     os.environ["LANGCHAIN_TRACING_V2"] = LANGCHAIN_TRACING_V2
     os.environ["LANGCHAIN_ENDPOINT"] = LANGCHAIN_ENDPOINT
     os.environ["LANGCHAIN_PROJECT"] = LANGCHAIN_PROJECT
     os.environ["LANGCHAIN_API_KEY"] = LANGCHAIN_API_KEY
+    
+    
+    

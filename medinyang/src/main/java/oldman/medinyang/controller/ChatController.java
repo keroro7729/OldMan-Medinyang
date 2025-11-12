@@ -1,12 +1,10 @@
 package oldman.medinyang.controller;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import oldman.medinyang.dto.chat.ChatDto;
 import oldman.medinyang.dto.chat.GetAiResponseRequest;
 import oldman.medinyang.dto.chat.ParseImageRequest;
 import oldman.medinyang.service.ChatService;
-import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -32,7 +30,9 @@ public class ChatController {
 
     @PostMapping
     public ResponseEntity<ChatDto> getAiResponse(@RequestBody GetAiResponseRequest request) {
-        return ResponseEntity.ok(chatService.sendMessage(request.getContent()));
+        return ResponseEntity.ok(chatService.ask(request.getContent()));
+
+        //return ResponseEntity.ok(chatService.sendMessage(request.getContent()));
     }
 
     @PostMapping("/ocr")

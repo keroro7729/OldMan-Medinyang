@@ -5,10 +5,14 @@ import oldman.medinyang.external.local.python.dto.PythonAnswerRes;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
 import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 import java.time.Duration;
 
@@ -38,12 +42,26 @@ public class PythonClient {
     }
 
     public PythonAnswerRes ask(PythonAnswerReq req){
-        return http.post()
-                .uri("/ask")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(req)
-                .retrieve()
-                .body(PythonAnswerRes.class);
-        // TODO : 예외처리
+        try{
+            return http.post()
+                    .uri("/ask")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(req)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
+                        throw new PythonApiException(response.getStatusCode(), response.getBody().toString());
+                    })
+                    .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
+                        throw new PythonApiException(response.getStatusCode(), response.getBody().toString());
+                    })
+                    .body(PythonAnswerRes.class);
+        } catch(ResourceAccessException e){
+            // connect/read timeout, connection refused 등
+            throw new PythonApiException("Upstream timeout/connect error", e, true);
+        } catch (RestClientException e){
+            // 기타 RestClient 계열
+            throw new PythonApiException("Upstream client error", e, false);
+        }
+
     }
 }

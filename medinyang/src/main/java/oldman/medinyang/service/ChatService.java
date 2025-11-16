@@ -5,6 +5,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import oldman.medinyang.domain.Chat;
 import oldman.medinyang.dto.chat.ChatDto;
+import oldman.medinyang.external.local.python.PythonClient;
+import oldman.medinyang.external.local.python.dto.PythonAnswerReq;
 import oldman.medinyang.external.openai.OpenAiClient;
 import oldman.medinyang.repository.ChatRepository;
 import org.springframework.data.domain.Page;
@@ -22,6 +24,13 @@ public class ChatService {
     private static final int CONTEXT_SIZE = 5;
     private final ChatRepository chatRepository;
     private final OpenAiClient openAiClient;
+    private final PythonClient pythonClient;
+
+    public ChatDto ask(String q){
+        String response = pythonClient.ask(new PythonAnswerReq(q, "")).answer();
+        Chat created = chatRepository.save(new Chat(q, response));
+        return new ChatDto(created);
+    }
 
     @Transactional(readOnly = true)
     public Page<ChatDto> viewList(Pageable pageable) {
@@ -49,4 +58,6 @@ public class ChatService {
         Collections.reverse(chats);
         return chats;
     }
+
+
 }

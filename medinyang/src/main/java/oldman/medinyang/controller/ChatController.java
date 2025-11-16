@@ -30,7 +30,9 @@ public class ChatController {
 
     @PostMapping
     public ResponseEntity<ChatDto> getAiResponse(@RequestBody GetAiResponseRequest request) {
-        return ResponseEntity.ok(chatService.sendMessage(request.getContent()));
+        return ResponseEntity.ok(chatService.ask(request.getContent()));
+
+        //return ResponseEntity.ok(chatService.sendMessage(request.getContent()));
     }
 
     @PostMapping("/ocr")

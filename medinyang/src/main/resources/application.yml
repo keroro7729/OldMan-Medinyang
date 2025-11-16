@@ -38,10 +38,15 @@ openai:
     apikey: ${OPENAI_API_KEY}
     baseurl: https://api.openai.com
 
+python:
+    base-url: http://localhost:8000
+
 app:
   storage:
     bucket: ${APP_STORAGE_BUCKET}
     region: ${APP_AWS_REGION}
+  frontend:
+    success-url: http://localhost:5173/main
 
   upload:
     maxSizeBytes: 10485760     # 로컬은 10MB까지 허용
